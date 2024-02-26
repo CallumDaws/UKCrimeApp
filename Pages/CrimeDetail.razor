@@ -1,0 +1,58 @@
+﻿@page "/crime-detail/{persistent_id?}"
+@using UKCrimeApp.Models;
+@using UKCrimeApp.Services;
+@inject CrimeDataService CrimeDataService
+
+@if (dataFetchedSuccessfully)
+{
+    <h2>Crime Details: @crimeOutcome.Crime.Category</h2>
+    <p>Location Type: @crimeOutcome.Crime.LocationType</p>
+    <p>Location: @crimeOutcome.Crime.Location.Street.Name</p>
+    <p>Month: @crimeOutcome.Crime.Month</p>
+    <h3>Outcomes:</h3>
+    @foreach (var outcome in crimeOutcome.Outcomes)
+    {
+        <p>Outcome: @outcome.Category.Name (Date: @outcome.Date)</p>
+    }
+}
+else
+{
+    <p>@errorMessage</p>
+}
+
+@code {
+    [Parameter]
+    public string? persistent_id { get; set; }
+
+    private CrimeOutcome? crimeOutcome;
+    private bool dataFetchedSuccessfully = false;
+    private string errorMessage = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        //Check if Id exists for crime and display data/error message if so
+        if (!string.IsNullOrWhiteSpace(persistent_id))
+        {
+            try
+            {
+                crimeOutcome = await CrimeDataService.GetCrimeOutcomeAsync(persistent_id);
+                if (crimeOutcome != null)
+                {
+                    dataFetchedSuccessfully = true;
+                }
+                else
+                {
+                    errorMessage = "No crime details found for the provided ID.";
+                }
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Error fetching crime details: {ex.Message}";
+            }
+        }
+        else
+        {
+            errorMessage = "No Crime Outcome ID was attached to this crime.";
+        }
+    }
+}

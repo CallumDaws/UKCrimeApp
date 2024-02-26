@@ -1,0 +1,39 @@
+﻿@inject AppState appState
+@inject CrimeDataService CrimeDataService
+@page "/category-details/{CategoryName}"
+@using UKCrimeApp.Models;
+@using UKCrimeApp.Services;
+
+
+@if (crimesInCategory != null && crimesInCategory.Any())
+{
+    <h2>Crimes in "@CategoryName" Category</h2>
+    <ul>
+        @foreach (var crime in crimesInCategory)
+        {
+            <li>
+                @crime.Category - @crime.Location.Street.Name
+                <a href="/crime-detail/@crime.persistent_id">View Details</a>
+            </li>
+        }
+    </ul>
+}
+else
+{
+    <p>No crimes found in this category.</p>
+}
+
+@code {
+    [Parameter]
+    public string CategoryName { get; set; }
+
+    private List<CrimeData> crimesInCategory;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var searchModel = appState.CurrentSearch; // Retrieve the search model from AppState
+        var allCrimes = await CrimeDataService.GetCrimesAsync(searchModel.Latitude, searchModel.Longitude, searchModel.Date);
+        crimesInCategory = allCrimes.Where(crime => crime.Category.Equals(CategoryName, StringComparison.OrdinalIgnoreCase)).ToList();
+
+    }
+}

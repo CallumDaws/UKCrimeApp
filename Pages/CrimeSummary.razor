@@ -1,0 +1,64 @@
+﻿@page "/crime-summary"
+@using System.Text.Json;
+@using UKCrimeApp.Models;
+@using UKCrimeApp.Services;
+@inject AppState appState
+@inject CrimeDataService CrimeDataService
+
+<h1 class="page-title">Crime Data Search</h1>
+
+<EditForm Model="@searchModel" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group row">
+        <InputText class="input-text" @bind-Value="searchModel.Latitude" placeholder="Latitude (e.g., 51.5074)" />
+        <InputText class="input-text" @bind-Value="searchModel.Longitude" placeholder="Longitude (e.g., -0.1278)" />
+        <InputText class="input-text" @bind-Value="searchModel.Date" placeholder="Date (YYYY-MM)" />
+    </div>
+    <div class="form-submit">
+        <button class="button-submit" type="submit">Search</button>
+    </div>
+</EditForm>
+
+@if (groupedCrimes != null && groupedCrimes.Any())
+{
+    <h3>Crime Summary</h3>
+    <ul>
+        @foreach (var entry in groupedCrimes)
+        {
+            <li>
+                @entry.Key: @entry.Value
+                <a href="/category-details/@Uri.EscapeDataString(entry.Key)">View Category Details</a>
+            </li>
+        }
+    </ul>
+}
+else if (searchModel.Date != null)
+{
+    <p>No data available for the selected date and location.</p>
+}
+else
+{
+    <p>Enter search criteria above and click Search.</p>
+}
+
+
+@code {
+    private CrimeSearchModel searchModel;
+    private Dictionary<string, int> groupedCrimes = new Dictionary<string, int>();
+
+    // Initialize searchModel with the saved search when the page is initialized
+    protected override void OnInitialized()
+    {
+        searchModel = appState.CurrentSearch ?? new CrimeSearchModel();
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        appState.CurrentSearch = searchModel; // Save the current search model in the AppState
+        var crimes = await CrimeDataService.GetCrimesAsync(searchModel.Latitude, searchModel.Longitude, searchModel.Date);
+        groupedCrimes = CrimeDataService.GroupCrimesByCategory(crimes);
+
+    }
+}
