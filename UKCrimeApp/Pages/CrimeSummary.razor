@@ -56,6 +56,7 @@ else if (activeTab == "map")
     private Dictionary<string, int> groupedCrimes = new Dictionary<string, int>();
     private bool isLoading = false;
     private string activeTab = "grid"; // Default to grid view
+    private bool mapInitialized = false;
 
     protected override void OnInitialized()
     {
@@ -64,9 +65,10 @@ else if (activeTab == "map")
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && activeTab == "map")
+        if (activeTab == "map" && !mapInitialized)
         {
             await JSRuntime.InvokeVoidAsync("loadMap");
+            mapInitialized = true; // Prevent future calls for map initialization
         }
     }
 
@@ -94,7 +96,6 @@ else if (activeTab == "map")
     private void ShowMapView()
     {
         SetActiveTab("map");
-        JSRuntime.InvokeVoidAsync("loadMap");
     }
 
     private void SetActiveTab(string tab)
