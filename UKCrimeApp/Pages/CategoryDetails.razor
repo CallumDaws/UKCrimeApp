@@ -8,20 +8,33 @@
 @if (crimesInCategory != null && crimesInCategory.Any())
 {
     <h2>Crimes in "@CategoryName" Category</h2>
-    <ul>
-        @foreach (var crime in crimesInCategory)
-        {
-            <li>
-                @crime.Category - @crime.Location.Street.Name
-                <a href="/crime-detail/@crime.persistent_id">View Details</a>
-            </li>
-        }
-    </ul>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Category</th>
+                <th>Location</th>
+                <th>Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var crime in crimesInCategory)
+            {
+                <tr>
+                    <td>@crime.Id</td>
+                    <td>@crime.Category</td>
+                    <td>@crime.Location.Street.Name</td>
+                    <td><a href="/crime-detail/@crime.persistent_id">View Details</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
 }
 else
 {
     <p>No crimes found in this category.</p>
 }
+
 
 @code {
     [Parameter]

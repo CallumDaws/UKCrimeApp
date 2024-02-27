@@ -21,7 +21,13 @@
     </div>
 </EditForm>
 
-@if (groupedCrimes != null && groupedCrimes.Any())
+@if (isLoading)
+{
+    <div class="loading-bar-container">
+        <div class="loading-bar" style="width: 100%;"></div>
+    </div>
+}
+else if (groupedCrimes != null && groupedCrimes.Any())
 {
     <h3>Crime Summary</h3>
     <table class="table">
@@ -60,6 +66,7 @@ else
 @code {
     private CrimeSearchModel searchModel;
     private Dictionary<string, int> groupedCrimes = new Dictionary<string, int>();
+    private bool isLoading = false; // Added loading indicator flag
 
     // Initialize searchModel with the saved search when the page is initialized
     protected override void OnInitialized()
@@ -69,9 +76,13 @@ else
 
     private async Task HandleValidSubmit()
     {
+        isLoading = true; // Set loading to true before fetching data
+        StateHasChanged(); // Trigger UI update to show loading bar immediately
         appState.CurrentSearch = searchModel; // Save the current search model in the AppState
         var crimes = await CrimeDataService.GetCrimesAsync(searchModel.Latitude, searchModel.Longitude, searchModel.Date);
         groupedCrimes = CrimeDataService.GroupCrimesByCategory(crimes);
-
+        isLoading = false; // Set loading to false after fetching data
+        StateHasChanged(); // Trigger UI update to hide loading bar
     }
 }
+
