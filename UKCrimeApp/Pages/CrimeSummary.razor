@@ -24,15 +24,25 @@
 @if (groupedCrimes != null && groupedCrimes.Any())
 {
     <h3>Crime Summary</h3>
-    <ul>
-        @foreach (var entry in groupedCrimes)
-        {
-            <li>
-                @entry.Key: @entry.Value
-                <a href="/category-details/@Uri.EscapeDataString(entry.Key)">View Category Details</a>
-            </li>
-        }
-    </ul>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Category</th>
+                <th>Count</th>
+                <th>Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var entry in groupedCrimes)
+            {
+                <tr>
+                    <td>@entry.Key</td>
+                    <td>@entry.Value</td>
+                    <td><a href="/category-details/@Uri.EscapeDataString(entry.Key)">View Category Details</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
 }
 else if (searchModel.Date != null)
 {
@@ -40,8 +50,11 @@ else if (searchModel.Date != null)
 }
 else
 {
-    <p>Enter search criteria above and click Search.</p>
+    <div class="initial-message">
+        <p>Enter search criteria above and click Search.</p>
+    </div>
 }
+
 
 
 @code {
