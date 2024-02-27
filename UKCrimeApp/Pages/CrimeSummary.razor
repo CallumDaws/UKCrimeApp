@@ -4,6 +4,7 @@
 @using UKCrimeApp.Services;
 @inject AppState appState
 @inject CrimeDataService CrimeDataService
+@inject IJSRuntime JSRuntime
 
 <h1 class="page-title">Crime Data Search</h1>
 
@@ -21,68 +22,84 @@
     </div>
 </EditForm>
 
+<div class="tabs">
+    <button class="tab-button" @onclick="ShowGridView">Grid View</button>
+    <button class="tab-button" @onclick="ShowMapView">Map View</button>
+</div>
+
 @if (isLoading)
 {
     <div class="loading-bar-container">
         <div class="loading-bar" style="width: 100%;"></div>
     </div>
 }
-else if (groupedCrimes != null && groupedCrimes.Any())
+else if (activeTab == "grid")
 {
-    <h3>Crime Summary</h3>
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Category</th>
-                <th>Count</th>
-                <th>Details</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var entry in groupedCrimes)
-            {
-                <tr>
-                    <td>@entry.Key</td>
-                    <td>@entry.Value</td>
-                    <td><a href="/category-details/@Uri.EscapeDataString(entry.Key)">View Category Details</a></td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <!-- Grid View Content -->
+    @if (groupedCrimes != null && groupedCrimes.Any())
+    {
+        <h3>Crime Summary</h3>
+        <!-- Table to display crimes -->
+    }
+    else if (searchModel.Date != null)
+    {
+        <p>No data available for the selected date and location.</p>
+    }
 }
-else if (searchModel.Date != null)
+else if (activeTab == "map")
 {
-    <p>No data available for the selected date and location.</p>
+    <div id="map" style="height: 400px;"></div>
 }
-else
-{
-    <div class="initial-message">
-        <p>Enter search criteria above and click Search.</p>
-    </div>
-}
-
-
 
 @code {
-    private CrimeSearchModel searchModel;
+    private CrimeSearchModel searchModel = new CrimeSearchModel();
     private Dictionary<string, int> groupedCrimes = new Dictionary<string, int>();
-    private bool isLoading = false; // Added loading indicator flag
+    private bool isLoading = false;
+    private string activeTab = "grid"; // Default to grid view
 
-    // Initialize searchModel with the saved search when the page is initialized
     protected override void OnInitialized()
     {
         searchModel = appState.CurrentSearch ?? new CrimeSearchModel();
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && activeTab == "map")
+        {
+            await JSRuntime.InvokeVoidAsync("loadMap");
+        }
+    }
+
     private async Task HandleValidSubmit()
     {
-        isLoading = true; // Set loading to true before fetching data
-        StateHasChanged(); // Trigger UI update to show loading bar immediately
-        appState.CurrentSearch = searchModel; // Save the current search model in the AppState
+        isLoading = true;
+        StateHasChanged();
+        appState.CurrentSearch = searchModel;
         var crimes = await CrimeDataService.GetCrimesAsync(searchModel.Latitude, searchModel.Longitude, searchModel.Date);
         groupedCrimes = CrimeDataService.GroupCrimesByCategory(crimes);
-        isLoading = false; // Set loading to false after fetching data
-        StateHasChanged(); // Trigger UI update to hide loading bar
+        isLoading = false;
+        StateHasChanged();
+
+        if (activeTab == "map")
+        {
+            await JSRuntime.InvokeVoidAsync("loadMap");
+        }
+    }
+
+    private void ShowGridView()
+    {
+        SetActiveTab("grid");
+    }
+
+    private void ShowMapView()
+    {
+        SetActiveTab("map");
+        JSRuntime.InvokeVoidAsync("loadMap");
+    }
+
+    private void SetActiveTab(string tab)
+    {
+        activeTab = tab;
+        StateHasChanged();
     }
 }
-
