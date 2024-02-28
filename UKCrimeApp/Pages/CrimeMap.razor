@@ -1,13 +1,20 @@
-﻿@using System.Text.Json;
+﻿@page "/map-view"
+@using System.Text.Json;
 @using UKCrimeApp.Models;
+@using UKCrimeApp.Services;
+@inject AppState appState
 @inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
 @implements IDisposable
+
+<h1 class="page-title">Crime Data Map View</h1>
 
 <div id="map" style="height: 400px;"></div>
 
+<button class="btn btn-primary mt-3" @onclick="GoBackToSearch">Back to Search</button>
+
 @code {
     private IJSObjectReference _module;
-    public List<CrimeData> Crimes { get; set; } // Assume this is populated appropriately
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -15,10 +22,15 @@
         {
             _module = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/MapInterop.js");
 
-            // Serialize your crimes list to JSON here so you can easily pass it to JavaScript
-            var crimesJson = JsonSerializer.Serialize(Crimes, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+            var crimesJson = JsonSerializer.Serialize(appState.CurrentCrimes, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+            Console.WriteLine(crimesJson);
             await _module.InvokeVoidAsync("initializeMap", "map", crimesJson);
         }
+    }
+
+    private void GoBackToSearch()
+    {
+        NavigationManager.NavigateTo("/crime-summary");
     }
 
     public void Dispose()
